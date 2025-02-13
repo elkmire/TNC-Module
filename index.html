@@ -338,132 +338,168 @@
     <input type="file" id="fileInput" accept=".tnc" style="display: none;">
 
     <script>
-        // Core crypto utilities
-        const cryptoUtil = {
-            async deriveKeyFromFactor(factor, salt, info) {
-                const enc = new TextEncoder();
-                const keyMaterial = await crypto.subtle.importKey(
-                    "raw",
-                    enc.encode(factor),
-                    { name: "PBKDF2" },
-                    false,
-                    ["deriveBits"]
-                );
-                
-                // Add context to salt using info parameter
-                const contextSalt = new Uint8Array([...enc.encode(salt), ...enc.encode(info)]);
-                
-                return crypto.subtle.deriveBits(
-                    {
-                        name: "PBKDF2",
-                        salt: contextSalt,
-                        iterations: 100000,
-                        hash: "SHA-256",
-                    },
-                    keyMaterial,
-                    256
-                );
-            },
+    // Core crypto utilities
+    const cryptoUtil = {
+        async deriveKeyFromFactor(factor, salt, info) {
+            const enc = new TextEncoder();
+            const keyMaterial = await crypto.subtle.importKey(
+                "raw",
+                enc.encode(factor),
+                { name: "PBKDF2" },
+                false,
+                ["deriveBits"]
+            );
+            
+            const contextSalt = new Uint8Array([...enc.encode(salt), ...enc.encode(info)]);
+            
+            return crypto.subtle.deriveBits(
+                {
+                    name: "PBKDF2",
+                    salt: contextSalt,
+                    iterations: 100000,
+                    hash: "SHA-256",
+                },
+                keyMaterial,
+                256
+            );
+        },
 
-            async deriveKey(passphrase, key, salt) {
-                // Derive keys from both factors independently
-                const [passphraseKey, keyKey] = await Promise.all([
-                    this.deriveKeyFromFactor(passphrase, salt, "passphrase"),
-                    this.deriveKeyFromFactor(key, salt, "key")
-                ]);
+        async deriveKey(passphrase, key, salt) {
+            const [passphraseKey, keyKey] = await Promise.all([
+                this.deriveKeyFromFactor(passphrase, salt, "passphrase"),
+                this.deriveKeyFromFactor(key, salt, "key")
+            ]);
 
-                // XOR the two derived keys together
-                const finalKey = new Uint8Array(32); // 256 bits
-                for (let i = 0; i < 32; i++) {
-                    finalKey[i] = passphraseKey[i] ^ keyKey[i];
-                }
-                
-                return finalKey;
-            },
-
-            async encrypt(text, passphrase, key) {
-                try {
-                    if (!text || !passphrase || !key) return '';
-                    
-                    // Validate inputs
-                    if (!/^\d{6}$/.test(passphrase)) {
-                        throw new Error('Passphrase must be exactly 6 digits');
-                    }
-                    if (!/^\d+$/.test(key)) {
-                        throw new Error('Key must contain only numbers');
-                    }
-                    
-                    const salt = window.crypto.getRandomValues(new Uint8Array(32));
-                    const derivedKey = await this.deriveKey(passphrase, key, salt);
-                    const enc = new TextEncoder();
-                    const data = enc.encode(text);
-                    
-                    // Import the combined key for AES-GCM
-                    const aesKey = await crypto.subtle.importKey(
-                        "raw",
-                        derivedKey,
-                        { name: "AES-GCM" },
-                        false,
-                        ["encrypt"]
-                    );
-                    
-                    const iv = window.crypto.getRandomValues(new Uint8Array(12));
-                    const encrypted = await crypto.subtle.encrypt(
-                        { name: "AES-GCM", iv },
-                        aesKey,
-                        data
-                    );
-                    
-                    const result = new Uint8Array(iv.length + salt.length + encrypted.byteLength);
-                    result.set(iv);
-                    result.set(salt, iv.length);
-                    result.set(new Uint8Array(encrypted), iv.length + salt.length);
-                    
-                    return btoa(String.fromCharCode(...result));
-                } catch (error) {
-                    throw new Error('Encryption failed: ' + error.message);
-                }
-            },
-
-            async decrypt(encryptedText, passphrase, key) {
-                try {
-                    if (!encryptedText || !passphrase || !key) return '';
-                    
-                    // Validate inputs
-                    if (!/^\d{6}$/.test(passphrase)) {
-                        throw new Error('Passphrase must be exactly 6 digits');
-                    }
-                    if (!/^\d+$/.test(key)) {
-                        throw new Error('Key must contain only numbers');
-                    }
-                    
-                    const encrypted = Uint8Array.from(atob(encryptedText), c => c.charCodeAt(0));
-                    
-                    const iv = encrypted.slice(0, 12);
-                    const salt = encrypted.slice(12, 44);
-                    const data = encrypted.slice(44);
-                    
-                    const derivedKey = await this.deriveKey(passphrase, key, salt);
-                    const aesKey = await crypto.subtle.importKey(
-                        "raw",
-                        derivedKey,
-                        { name: "AES-GCM" },
-                        false,
-                        ["decrypt"]
-                    );
-                    
-                    const decrypted = await crypto.subtle.decrypt(
-                        { name: "AES-GCM", iv },
-                        aesKey,
-                        data
-                    );
-                    
-                    return new TextDecoder().decode(decrypted);
-                } catch (error) {
-                    throw new Error('Decryption failed: Invalid credentials or corrupted data');
-                }
+            const finalKey = new Uint8Array(32);
+            for (let i = 0; i < 32; i++) {
+                finalKey[i] = passphraseKey[i] ^ keyKey[i];
             }
-        };
+            
+            return finalKey;
+        },
+
+        async encrypt(text, passphrase, key) {
+            try {
+                if (!text || !passphrase || !key) return '';
+                
+                if (!/^\d{6}$/.test(passphrase)) {
+                    throw new Error('Passphrase must be exactly 6 digits');
+                }
+                if (!/^\d+$/.test(key)) {
+                    throw new Error('Key must contain only numbers');
+                }
+                
+                const salt = window.crypto.getRandomValues(new Uint8Array(32));
+                const derivedKey = await this.deriveKey(passphrase, key, salt);
+                const enc = new TextEncoder();
+                const data = enc.encode(text);
+                
+                const aesKey = await crypto.subtle.importKey(
+                    "raw",
+                    derivedKey,
+                    { name: "AES-GCM" },
+                    false,
+                    ["encrypt"]
+                );
+                
+                const iv = window.crypto.getRandomValues(new Uint8Array(12));
+                const encrypted = await crypto.subtle.encrypt(
+                    { name: "AES-GCM", iv },
+                    aesKey,
+                    data
+                );
+
+                // Create a verification hash of the passphrase and key
+                const credHash = await this.deriveKeyFromFactor(passphrase + key, salt, "verification");
+                
+                // Combine everything: iv + salt + credHash + encrypted data
+                const result = new Uint8Array(iv.length + salt.length + 32 + encrypted.byteLength);
+                result.set(iv);
+                result.set(salt, iv.length);
+                result.set(new Uint8Array(credHash), iv.length + salt.length);
+                result.set(new Uint8Array(encrypted), iv.length + salt.length + 32);
+                
+                return btoa(String.fromCharCode(...result));
+            } catch (error) {
+                throw new Error('Encryption failed: ' + error.message);
+            }
+        },
+
+        async decrypt(encryptedText, passphrase, key) {
+            try {
+                if (!encryptedText || !passphrase || !key) return '';
+                
+                if (!/^\d{6}$/.test(passphrase)) {
+                    throw new Error('Passphrase must be exactly 6 digits');
+                }
+                if (!/^\d+$/.test(key)) {
+                    throw new Error('Key must contain only numbers');
+                }
+                
+                let encrypted;
+                try {
+                    encrypted = Uint8Array.from(atob(encryptedText), c => c.charCodeAt(0));
+                } catch (e) {
+                    throw new Error('Invalid encrypted data format');
+                }
+                
+                if (encrypted.length < 88) { // 12 (iv) + 32 (salt) + 32 (credHash) + min data length
+                    throw new Error('Invalid encrypted data length');
+                }
+                
+                const iv = encrypted.slice(0, 12);
+                const salt = encrypted.slice(12, 44);
+                const storedCredHash = encrypted.slice(44, 76);
+                const data = encrypted.slice(76);
+                
+                // Verify credentials match
+                const credHash = await this.deriveKeyFromFactor(passphrase + key, salt, "verification");
+                const credHashArray = new Uint8Array(credHash);
+                
+                // Compare hashes in constant time to prevent timing attacks
+                let hashMatch = true;
+                for (let i = 0; i < 32; i++) {
+                    if (credHashArray[i] !== storedCredHash[i]) {
+                        hashMatch = false;
+                    }
+                }
+                
+                if (!hashMatch) {
+                    throw new Error('Incorrect passphrase or key');
+                }
+                
+                const derivedKey = await this.deriveKey(passphrase, key, salt);
+                const aesKey = await crypto.subtle.importKey(
+                    "raw",
+                    derivedKey,
+                    { name: "AES-GCM" },
+                    false,
+                    ["decrypt"]
+                );
+                
+                let decrypted;
+                try {
+                    decrypted = await crypto.subtle.decrypt(
+                        { name: "AES-GCM", iv },
+                        aesKey,
+                        data
+                    );
+                } catch (e) {
+                    throw new Error('Decryption failed');
+                }
+                
+                try {
+                    return new TextDecoder().decode(decrypted);
+                } catch (e) {
+                    throw new Error('Decryption failed: corrupted data');
+                }
+            } catch (error) {
+                throw new Error(error.message || 'Decryption failed: Invalid credentials or corrupted data');
+            }
+        }
+
+        
+    };
 
         // UI Elements
         const elements = {
@@ -478,6 +514,11 @@
             saveButton: document.getElementById('saveButton')
         };
 
+        let state = {
+            encryptMode: true,
+            timeoutId: null
+        };
+
         // Mobile clipboard functionality
         const copyIndicator = document.createElement('div');
         copyIndicator.className = 'copy-indicator';
@@ -489,7 +530,7 @@
         `;
         document.body.appendChild(copyIndicator);
 
-        // event handler for output
+        // Add touch event handler for output
         elements.outputMessage.addEventListener('touchstart', async (event) => {
             const text = event.target.value;
             if (!text) return;
@@ -505,12 +546,6 @@
                 showError('Failed to copy to clipboard');
             }
         });
-
-        // State
-        let state = {
-            encryptMode: true,
-            timeoutId: null
-        };
 
         // UI Updates
         function updateMode() {
@@ -541,22 +576,37 @@
 
             if (!/^\d{6}$/.test(passphrase.value)) {
                 showError('Passphrase must be exactly 6 digits');
+                outputMessage.value = '';
                 return;
             }
 
             if (!/^\d+$/.test(key.value)) {
                 showError('Key must contain only numbers');
+                outputMessage.value = '';
                 return;
             }
 
             try {
+                // Clear the output first
+                outputMessage.value = '';
+                
                 const result = await (state.encryptMode ? 
                     cryptoUtil.encrypt(inputMessage.value, passphrase.value, key.value) : 
                     cryptoUtil.decrypt(inputMessage.value, passphrase.value, key.value));
-                outputMessage.value = result;
+                
+                if (result) {
+                    outputMessage.value = result;
+                    showError('');
+                } else {
+                    showError(state.encryptMode ? 'Encryption failed' : 'Decryption failed: Invalid credentials');
+                }
             } catch (err) {
-                showError(err.message);
                 outputMessage.value = '';
+                if (err.message.includes('Incorrect passphrase or key')) {
+                    showError('Decryption failed: Incorrect passphrase or key');
+                } else {
+                    showError(err.message);
+                }
             }
         }
 
@@ -619,35 +669,142 @@
             elements[id].addEventListener('input', scheduleUpdate);
         });
 
+        async function encryptCredentials(credString, password) {
+        const salt = window.crypto.getRandomValues(new Uint8Array(32));
+        const enc = new TextEncoder();
+        
+        // Import the password as key material
+        const keyMaterial = await crypto.subtle.importKey(
+            "raw",
+            enc.encode(password),
+            { name: "PBKDF2" },
+            false,
+            ["deriveBits"]
+        );
+        
+        // Derive a key for file encryption
+        const fileKey = await crypto.subtle.deriveBits(
+            {
+                name: "PBKDF2",
+                salt: salt,
+                iterations: 100000,
+                hash: "SHA-256",
+            },
+            keyMaterial,
+            256
+        );
+        
+        // Import as AES key
+        const aesKey = await crypto.subtle.importKey(
+            "raw",
+            fileKey,
+            { name: "AES-GCM" },
+            false,
+            ["encrypt"]
+        );
+        
+        // Encrypt the credentials
+        const iv = window.crypto.getRandomValues(new Uint8Array(12));
+        const encryptedData = await crypto.subtle.encrypt(
+            { name: "AES-GCM", iv },
+            aesKey,
+            enc.encode(credString)
+        );
+        
+        // Combine salt + iv + encrypted data
+        const result = new Uint8Array(salt.length + iv.length + encryptedData.byteLength);
+        result.set(salt);
+        result.set(iv, salt.length);
+        result.set(new Uint8Array(encryptedData), salt.length + iv.length);
+        
+        return btoa(String.fromCharCode(...result));
+    }
+
+    async function decryptCredentials(encryptedData, password) {
+        try {
+            const enc = new TextEncoder();
+            const data = Uint8Array.from(atob(encryptedData), c => c.charCodeAt(0));
+            
+            // Extract components
+            const salt = data.slice(0, 32);
+            const iv = data.slice(32, 44);
+            const encrypted = data.slice(44);
+            
+            // Import the password as key material
+            const keyMaterial = await crypto.subtle.importKey(
+                "raw",
+                enc.encode(password),
+                { name: "PBKDF2" },
+                false,
+                ["deriveBits"]
+            );
+            
+            // Derive the file key
+            const fileKey = await crypto.subtle.deriveBits(
+                {
+                    name: "PBKDF2",
+                    salt: salt,
+                    iterations: 100000,
+                    hash: "SHA-256",
+                },
+                keyMaterial,
+                256
+            );
+            
+            // Import as AES key
+            const aesKey = await crypto.subtle.importKey(
+                "raw",
+                fileKey,
+                { name: "AES-GCM" },
+                false,
+                ["decrypt"]
+            );
+            
+            // Decrypt
+            const decrypted = await crypto.subtle.decrypt(
+                { name: "AES-GCM", iv },
+                aesKey,
+                encrypted
+            );
+            
+            return new TextDecoder().decode(decrypted);
+        } catch (error) {
+            throw new Error('Invalid password or corrupted file');
+        }
+    }
+
         // File handling functions
         async function saveCredentials() {
-            const { passphrase, key } = elements;
-            if (!passphrase.value || !key.value) {
-                showError('No credentials to save');
-                return;
-            }
+        const { passphrase, key } = elements;
+        if (!passphrase.value || !key.value) {
+            showError('No credentials to save');
+            return;
+        }
 
-            // Show password dialog
-            const passwordDialog = document.getElementById('passwordDialog');
-            const dialogTitle = document.getElementById('dialogTitle');
-            const passwordInput = document.getElementById('passwordInput');
-            const dialogConfirm = document.getElementById('dialogConfirm');
-            const dialogCancel = document.getElementById('dialogCancel');
+        // Show password dialog
+        const passwordDialog = document.getElementById('passwordDialog');
+        const dialogTitle = document.getElementById('dialogTitle');
+        const passwordInput = document.getElementById('passwordInput');
+        const dialogConfirm = document.getElementById('dialogConfirm');
+        const dialogCancel = document.getElementById('dialogCancel');
 
-            dialogTitle.textContent = 'Enter Password for Credential File';
-            passwordDialog.style.display = 'block';
-            passwordInput.value = '';
+        dialogTitle.textContent = 'Set Password for Credential File';
+        passwordDialog.style.display = 'block';
+        passwordInput.value = '';
+        passwordInput.type = 'text'; // Allow any string input
+        passwordInput.setAttribute('pattern', '.*'); // Remove numeric restriction
 
-            // Handle dialog actions
-            const dialogPromise = new Promise((resolve, reject) => {
+        // Handle dialog actions
+        try {
+            const password = await new Promise((resolve, reject) => {
                 dialogConfirm.onclick = () => {
-                    const password = passwordInput.value;
-                    if (!password) {
+                    const pwd = passwordInput.value;
+                    if (!pwd) {
                         showError('Password cannot be empty');
                         return;
                     }
                     passwordDialog.style.display = 'none';
-                    resolve(password);
+                    resolve(pwd);
                 };
 
                 dialogCancel.onclick = () => {
@@ -655,105 +812,110 @@
                     reject('Cancelled');
                 };
             });
+            
+            // Create and encrypt credentials string
+            const credString = `${passphrase.value}:${key.value}`;
+            const encryptedData = await encryptCredentials(credString, password);
+            
+            // Create blob and save with dialog
+            const blob = new Blob([encryptedData], { type: 'text/plain' });
+            const handle = await window.showSaveFilePicker({
+                suggestedName: 'credentials.tnc',
+                types: [{
+                    description: 'TNC Credential File',
+                    accept: {'text/plain': ['.tnc']}
+                }]
+            });
+            const writable = await handle.createWritable();
+            await writable.write(blob);
+            await writable.close();
+            
+            showError('');
+        } catch (error) {
+            if (error !== 'Cancelled') {
+                showError('Error saving credentials: ' + error.message);
+            }
+        } finally {
+            passwordInput.type = 'password'; // Reset input type
+        }
+    }
+
+    // Updated load credentials function
+    async function loadCredentials() {
+        const fileInput = document.getElementById('fileInput');
+        fileInput.click();
+
+        fileInput.onchange = async function() {
+            const file = fileInput.files[0];
+            if (!file) return;
 
             try {
-                const password = await dialogPromise;
+                const text = await file.text();
                 
-                // Create and encrypt credentials string
-                const credString = `${passphrase.value}:${key.value}`;
-                const encryptedData = await cryptoUtil.encrypt(credString, password, '123456');
+                // Show password dialog
+                const passwordDialog = document.getElementById('passwordDialog');
+                const dialogTitle = document.getElementById('dialogTitle');
+                const passwordInput = document.getElementById('passwordInput');
                 
-                // Create blob and save with dialog
-                const blob = new Blob([encryptedData], { type: 'text/plain' });
-                try {
-                    const handle = await window.showSaveFilePicker({
-                        suggestedName: 'credentials.tnc',
-                        types: [{
-                            description: 'TNC Credential File',
-                            accept: {'text/plain': ['.tnc']}
-                        }]
-                    });
-                    const writable = await handle.createWritable();
-                    await writable.write(blob);
-                    await writable.close();
-                } catch (error) {
-                    if (error.name !== 'AbortError') {
-                        throw error;
-                    }
-                }
-                
-                showError('');
-            } catch (error) {
-                if (error !== 'Cancelled') {
-                    showError('Error saving credentials: ' + error.message);
-                }
-            }
-        }
+                dialogTitle.textContent = 'Enter Password for Credential File';
+                passwordDialog.style.display = 'block';
+                passwordInput.value = '';
+                passwordInput.type = 'text'; // Allow any string input
+                passwordInput.setAttribute('pattern', '.*'); // Remove numeric restriction
 
-        async function loadCredentials() {
-            const fileInput = document.getElementById('fileInput');
-            fileInput.click();
-
-            fileInput.onchange = async function() {
-                const file = fileInput.files[0];
-                if (!file) return;
-
-                try {
-                    // Read file content
-                    const text = await file.text();
-
-                    // Show password dialog
-                    const passwordDialog = document.getElementById('passwordDialog');
-                    const dialogTitle = document.getElementById('dialogTitle');
-                    const passwordInput = document.getElementById('passwordInput');
+                // Handle dialog actions
+                const password = await new Promise((resolve, reject) => {
                     const dialogConfirm = document.getElementById('dialogConfirm');
                     const dialogCancel = document.getElementById('dialogCancel');
 
-                    dialogTitle.textContent = 'Enter Password for Credential File';
-                    passwordDialog.style.display = 'block';
-                    passwordInput.value = '';
+                    dialogConfirm.onclick = () => {
+                        const pwd = passwordInput.value;
+                        if (!pwd) {
+                            showError('Password cannot be empty');
+                            return;
+                        }
+                        passwordDialog.style.display = 'none';
+                        resolve(pwd);
+                    };
 
-                    // Handle dialog actions
-                    const password = await new Promise((resolve, reject) => {
-                        dialogConfirm.onclick = () => {
-                            const pwd = passwordInput.value;
-                            if (!pwd) {
-                                showError('Password cannot be empty');
-                                return;
-                            }
-                            passwordDialog.style.display = 'none';
-                            resolve(pwd);
-                        };
+                    dialogCancel.onclick = () => {
+                        passwordDialog.style.display = 'none';
+                        reject('Cancelled');
+                    };
+                });
 
-                        dialogCancel.onclick = () => {
-                            passwordDialog.style.display = 'none';
-                            reject('Cancelled');
-                        };
-                    });
-
-                    // Decrypt and set credentials
-                    const decryptedData = await cryptoUtil.decrypt(text, password, '123456');
-                    const [loadedPassphrase, loadedKey] = decryptedData.split(':');
-                    
-                    elements.passphrase.value = loadedPassphrase;
-                    elements.key.value = loadedKey;
-                    showError('');
-                    
-                    // Clear file input
-                    fileInput.value = '';
-                    
-                    // Trigger output update with new credentials
-                    scheduleUpdate();
-                } catch (error) {
-                    if (error !== 'Cancelled') {
-                        showError('Error loading credentials: ' + error.message);
-                    }
-                    fileInput.value = '';
+                // Decrypt and validate credentials
+                const decryptedData = await decryptCredentials(text, password);
+                if (!decryptedData || !decryptedData.includes(':')) {
+                    throw new Error('Invalid credential file format');
                 }
-            };
-        }
 
-        // event listeners for file handling
+                const [loadedPassphrase, loadedKey] = decryptedData.split(':');
+                
+                // Validate loaded credentials
+                if (!/^\d{6}$/.test(loadedPassphrase) || !/^\d+$/.test(loadedKey)) {
+                    throw new Error('Invalid credentials in file');
+                }
+                
+                // Update credentials and trigger processing
+                elements.passphrase.value = loadedPassphrase;
+                elements.key.value = loadedKey;
+                showError('');
+                
+                // Trigger immediate update with new credentials
+                await processInput();
+            } catch (error) {
+                if (error !== 'Cancelled') {
+                    showError('Error loading credentials: ' + error.message);
+                }
+            } finally {
+                fileInput.value = ''; // Clear file input
+                passwordInput.type = 'password'; // Reset input type
+            }
+        };
+    }
+
+        // Add event listeners for file handling
         elements.saveButton.addEventListener('click', saveCredentials);
         elements.loadButton.addEventListener('click', loadCredentials);
 
