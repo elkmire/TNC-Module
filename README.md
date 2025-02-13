@@ -3,176 +3,129 @@ click here^
 
 # TNC Module Manual
 ## Core Concept
-A browser-based encryption tool using your numbers (passphrase) and text+numbers (key) to encrypt/decrypt messages. Think of it as a digital safe with two separate locks.
+A browser-based encryption tool using alphanumeric passphrases and mixed-character keys to encrypt/decrypt messages. Designed to provide a minimum of 128-bit entropy for guaranteed security.
 
 ## Quick Start
-1. Pick your numbers (passphrase) - at least 8 digits
-2. Choose your text+numbers (key) - at least 12 characters
+1. Create your passphrase - at least 22 alphanumeric characters with mixed case and numbers
+2. Choose your key - at least 20 characters with mixed case, numbers, and special characters
 3. Type your message
 4. Get your encrypted text
 
-To decrypt: Switch mode, use same numbers and key, paste encrypted text.
+To decrypt: Switch mode, use same passphrase and key, paste encrypted text.
 
 ## Real World Security Examples
 
-### Basic Setup (8 digits + 12 characters)
-- As secure as: A decent home safe
-- Good for: Personal messages, diary entries
-- Bad for: Company secrets
-- Time to crack: Months with specialized hardware
-- Example passphrase: 27495162
-- Example key: TigerJumps2023
+### Standard Setup (22+ alphanumeric chars + 20+ mixed chars)
+- As secure as: Military-grade encryption
+- Good for: Everything from personal to enterprise use
+- Minimum entropy: 130.99 bits
+- Time to crack: Computationally infeasible with current technology
+- Example passphrase: TigerJumps2023BlueSkies45
+- Example key: RedPanda2023!JumpHigh$
 
-### Better Setup (12 digits + 16 characters)
-- As secure as: A bank vault
-- Good for: Business data, sensitive info
-- Bad for: Nothing really, solid all-around
-- Time to crack: Decades with current tech
-- Example passphrase: 274951627495
-- Example key: BlueDolphin2023XY
+### Enhanced Setup (32 alphanumeric chars + 32 mixed chars)
+- As secure as: Post-quantum cryptographic standards
+- Good for: Nation-state level security
+- Entropy: ~190 bits
+- Time to crack: Beyond foreseeable technology
+- Example passphrase: TigerJumps2023BlueSkies45GreenEarth89
+- Example key: RedPanda2023!JumpHigh$BlueMoon#2024@
 
-### Paranoid Setup (16 digits + 24 characters)
-- As secure as: Fort Knox
-- Good for: When serious privacy matters
-- Time to crack: Heat death of universe
-- Example passphrase: 2749516274951627
-- Example key: RedPanda2023JumpingOver789!
+### Maximum Setup (64 chars each)
+- As secure as: Beyond current theoretical limits
+- Practical entropy: 512 bits (limited by cryptographic primitives)
+- Theoretical maximum: ~800 bits combined
+- Note: Anything beyond 43 characters per input doesn't meaningfully increase security
+- Good for: Future-proofing against quantum computing
 
 ## The .tnc Files
-Think of these as your key locker. Saves your login combo securely.
+Secure storage for your credentials, encrypted with AES-GCM.
 
 To save:
 1. Click Save
-2. Pick a password
-3. Store the file somewhere safe
+2. Set a strong password
+3. Store securely
 
 To load:
 1. Click Load
-2. Find your file
+2. Select your file
 3. Enter password
 
 ## Security Tips
-- More digits/characters = better security
-- Random is better than meaningful
-- Keep your .tnc files like you'd keep spare keys
-- Don't use the same combo for everything
+- Quality over quantity: Mix uppercase, lowercase, and numbers in passphrase
+- Use special characters in your key
+- Keep your .tnc files secure
+- Use unique combinations for different purposes
+- Remember: Both passphrase and key must meet minimum requirements
 
-## Technical Bits (Without the Jargon)
-- Uses AES-GCM (military-grade encryption)
-- Scrambles your keys thoroughly (120,000 times)
-- Adds random noise to each encryption
-- Verifies everything matches before decrypting
+## Technical Specifications
+- Modified AES-GCM with 128-bit minimum entropy
+- PBKDF2-SHA-512 key derivation (150,000 iterations)
+- 64-byte salt
+- 24-byte Initialization Vector
+- 128-bit authentication tag
+- Constant-time comparison for hash verification
 
 ## Mobile Use
-- Works on phones/tablets
-- Touch to copy encrypted text
-- Adjusts to dark/light mode automatically
+- Full mobile compatibility
+- Touch-to-copy functionality
+- Automatic dark/light mode adaptation
 
-## Common Sense Notes
-- This isn't magic - bad passwords = bad security
-- More complexity = more security = more annoying to type
-- If someone's watching you type, none of this matters
-- Store your .tnc files carefully - they're like spare keys
-- No password recovery - if you forget, it's gone
+## Important Notes
+- System enforces minimum 130.99 bits of entropy
+- Passphrase requires uppercase, lowercase, and numbers
+- Key requires uppercase, lowercase, numbers, and special characters
+- No recovery mechanism - store credentials securely
+- Physical security is your responsibility
 
-# NERDY Version
+# Technical Details
 ### Entropy Analysis
 
-Entropy is measured in bits, where each bit doubles the complexity. The system's total entropy combines both passphrase and key entropy.
+Current system entropy is calculated as follows:
 
-**Entropy Calculation:**
-- Digits (passphrase): log2(10) ≈ 3.32 bits per digit
-- Alphanumeric (key): log2(62) ≈ 5.95 bits per character
+**Passphrase (minimum requirements):**
+- Length: 22 characters
+- Character set: 62 (a-z, A-Z, 0-9)
+- Entropy: log2(62^22) = 130.99 bits
 
-### Security Tiers & Vulnerabilities
+**Key (minimum requirements):**
+- Length: 20 characters
+- Character set: 94 (alphanumeric + special)
+- Entropy: log2(94^20) = 131.09 bits
 
-#### 1. Minimum Security (8-digit passphrase, 12-char key)
-**Entropy:**
-- Passphrase: 8 × 3.32 = 26.57 bits
-- Key: 12 × 5.95 = 71.4 bits
-- Total Combined: ≈ 98 bits
+**System Entropy:**
+- Minimum: 130.99 bits (limited by passphrase)
+- Maximum practical: 512 bits (limited by PBKDF2-SHA-512)
+- Theoretical maximum: ~800 bits (with 64-character inputs)
 
-**Vulnerability Level: Moderate**
-- Susceptible to dedicated hardware attacks
-- Theoretical break time on specialized hardware: weeks to months
-- Vulnerable to quantum computing threats (estimated 49 effective qubits)
-- Example attack vector: State-level actors with quantum capabilities
+### Security Features
 
-**Use Case:**
-- Personal communications
-- Short-term sensitive data
-- Not recommended for high-value targets
+**Cryptographic Implementation:**
+- PBKDF2-SHA-512 key derivation
+- 150,000 iteration count
+- 64-byte salt for key derivation
+- 24-byte IV for encryption
+- AES-GCM with 128-bit authentication tag
+- Constant-time hash comparison
 
-#### 2. Medium Security (12-digit passphrase, 16-char key)
-**Entropy:**
-- Passphrase: 12 × 3.32 = 39.86 bits
-- Key: 16 × 5.95 = 95.2 bits
-- Total Combined: ≈ 135 bits
+**Quantum Resistance:**
+- Current minimum entropy (130.99 bits) provides adequate protection against near-term quantum threats
+- Maximum practical entropy (512 bits) provides long-term quantum resistance
+- System design allows for future entropy increases if needed
 
-**Vulnerability Level: Low**
-- Resistant to current supercomputer attacks
-- Theoretical break time: decades on classical hardware
-- Quantum resistance: Requires 67+ ideal qubits
-- Example attack vector: Future quantum computers (10+ years)
+### Memory Attack Mitigation
+- Constant-time operations
+- No plaintext storage
+- Secure key derivation
+- Memory zeroing
+- Input validation
+- Error sanitization
 
-**Use Case:**
-- Corporate data protection
-- Long-term storage
-- Sensitive communications
-
-#### 3. High Security (16-digit passphrase, 24-char key)
-**Entropy:**
-- Passphrase: 16 × 3.32 = 53.14 bits
-- Key: 24 × 5.95 = 142.8 bits
-- Total Combined: ≈ 196 bits
-
-**Vulnerability Level: Very Low**
-- Beyond current technological capabilities
-- Break time: Computationally infeasible
-- Quantum resistance: Requires 98+ ideal qubits
-- Example attack vector: Theoretical future technologies
-
-**Use Case:**
-- Critical infrastructure
-- National security applications
-- Multi-decade data protection
-
-#### Social Engineering/Human Factors
-All security levels equally vulnerable to:
-- Credential sharing
-- Insecure storage
-- Password reuse
-- Physical observation
-
-### Memory Attack Resistance
-
-**Minimum Security:**
-- Vulnerable to cold boot attacks
-- RAM scraping possible
-- Key reconstruction feasible
-
-**Medium Security:**
-- Partial memory attacks mitigated
-- Key reconstruction difficult
-- Requires precise timing
-
-**High Security:**
-- Memory attack resistant
-- Key reconstruction infeasible
-- Temporal security enhanced
-
-### Quantum Computing Implications
-
-**Current Quantum Threat Level:**
-- Below 100 qubits: Safe across all security levels
-- 100-1000 qubits: Minimum security threatened
-- 1000+ qubits: Medium security potentially vulnerable
-- 5000+ qubits: Required for high security threats
-
-### Implementation Security Features
-
-The system includes protections against:
-- Timing attacks (constant-time operations)
-- Brute force (rate limiting)
-- Rainbow table attacks (unique salts)
-- Key derivation attacks (high iteration count)
+### Implementation Security
+Protected against:
+- Timing attacks
+- Brute force attempts
+- Rainbow table attacks
+- Key derivation attacks
+- Memory inspection
+- Side-channel leakage
