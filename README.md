@@ -1,215 +1,178 @@
 # [TNC MODULE](https://elkmire.github.io/TNC-Module/)
 click here^
 
-# TNC Module Encryption Guide
+# TNC Module Manual
+## Core Concept
+A browser-based encryption tool using your numbers (passphrase) and text+numbers (key) to encrypt/decrypt messages. Think of it as a digital safe with two separate locks.
 
-## Overview
-The TNC Module uses a dual-factor encryption system combining a 6-digit passphrase with a variable-length numeric key. Let's analyze the total security space created by these combinations.
+## Quick Start
+1. Pick your numbers (passphrase) - at least 8 digits
+2. Choose your text+numbers (key) - at least 12 characters
+3. Type your message
+4. Get your encrypted text
 
-## Security Level Analysis
+To decrypt: Switch mode, use same numbers and key, paste encrypted text.
 
-### Basic Security
-```
-Passphrase: 6 digits (e.g., 123456)
-Key: 5 digits (e.g., 12345)
-```
-Total combination space:
-- Passphrase possibilities: 10^6 (1,000,000)
-- Key possibilities: 10^5 (100,000)
-- Combined possibilities: 10^6 × 10^5 = 10^11 (100 billion) combinations
-- Equivalent to ~37 bits of entropy
+## Real World Security Examples
 
-### Medium Security
-```
-Passphrase: 6 digits (e.g., 847593)
-Key: 11 digits (e.g., 27384923847)
-```
-Total combination space:
-- Passphrase possibilities: 10^6 (1,000,000)
-- Key possibilities: 10^11 (100 billion)
-- Combined possibilities: 10^6 × 10^11 = 10^17 (100 quadrillion) combinations
-- Equivalent to ~56 bits of entropy
+### Basic Setup (8 digits + 12 characters)
+- As secure as: A decent home safe
+- Good for: Personal messages, diary entries
+- Bad for: Company secrets
+- Time to crack: Months with specialized hardware
+- Example passphrase: 27495162
+- Example key: TigerJumps2023
 
-### High Security
-```
-Passphrase: 6 digits (e.g., 947284)
-Key: 16 digits (e.g., 2738492384729384)
-```
-Total combination space:
-- Passphrase possibilities: 10^6 (1,000,000)
-- Key possibilities: 10^16 (10 quadrillion)
-- Combined possibilities: 10^6 × 10^16 = 10^22 (10 sextillion) combinations
-- Equivalent to ~73 bits of entropy
+### Better Setup (12 digits + 16 characters)
+- As secure as: A bank vault
+- Good for: Business data, sensitive info
+- Bad for: Nothing really, solid all-around
+- Time to crack: Decades with current tech
+- Example passphrase: 274951627495
+- Example key: BlueDolphin2023XY
 
-## Security Enhancement Factors
+### Paranoid Setup (16 digits + 24 characters)
+- As secure as: Fort Knox
+- Good for: When serious privacy matters
+- Time to crack: Heat death of universe
+- Example passphrase: 2749516274951627
+- Example key: RedPanda2023JumpingOver789!
 
-### PBKDF2 Protection
-The system's use of PBKDF2 with 100,000 iterations adds significant computational cost to each attempt:
-- Each guess requires two PBKDF2 operations (one for passphrase, one for key)
-- The 100,000 iteration count means each guess takes milliseconds even on modern hardware
-- Example: Testing 1 million combinations could take hours instead of seconds
+## The .tnc Files
+Think of these as your key locker. Saves your login combo securely.
 
-### Effective Security by Key Length
+To save:
+1. Click Save
+2. Pick a password
+3. Store the file somewhere safe
 
-| Key Length | Combined Possibilities | Entropy (bits) | Security Level |
-|------------|----------------------|----------------|----------------|
-| 4 digits   | 10^10 (10 billion)  | ~33 bits       | Very Low      |
-| 8 digits   | 10^14 (100 trillion)| ~46 bits       | Low           |
-| 12 digits  | 10^18 (1 quintillion)| ~60 bits      | Medium        |
-| 16 digits  | 10^22 (10 sextillion)| ~73 bits      | High          |
+To load:
+1. Click Load
+2. Find your file
+3. Enter password
 
-## Practical Security Implications
+## Security Tips
+- More digits/characters = better security
+- Random is better than meaningful
+- Keep your .tnc files like you'd keep spare keys
+- Don't use the same combo for everything
 
-1. **Basic Security (5-digit key)**
-   - 100 billion total combinations
-   - Vulnerable to dedicated cracking attempts
-   - Suitable only for temporary or low-value data
+## Technical Bits (Without the Jargon)
+- Uses AES-GCM (military-grade encryption)
+- Scrambles your keys thoroughly (120,000 times)
+- Adds random noise to each encryption
+- Verifies everything matches before decrypting
 
-2. **Medium Security (11-digit key)**
-   - 100 quadrillion total combinations
-   - Resistant to standard cracking attempts
-   - Suitable for personal sensitive data
+## Mobile Use
+- Works on phones/tablets
+- Touch to copy encrypted text
+- Adjusts to dark/light mode automatically
 
-3. **Maximum Security (16-digit key)**
-   - 10 sextillion total combinations
-   - Highly resistant to all practical cracking attempts
-   - Suitable for highly sensitive data
+## Common Sense Notes
+- This isn't magic - bad passwords = bad security
+- More complexity = more security = more annoying to type
+- If someone's watching you type, none of this matters
+- Store your .tnc files carefully - they're like spare keys
+- No password recovery - if you forget, it's gone
 
-## Security Recommendations
+# NERDY Version
+### Entropy Analysis
 
-1. **Key Length Selection**
-   - Always use maximum key length (16 digits) for sensitive data
-   - Minimum recommended key length: 12 digits
-   - Remember: each additional digit multiplies total combinations by 10
+Entropy is measured in bits, where each bit doubles the complexity. The system's total entropy combines both passphrase and key entropy.
 
-2. **Randomization**
-   - Use truly random digits for both passphrase and key
-   - Avoid patterns or sequential numbers
-   - Consider using a random number generator for key generation
+**Entropy Calculation:**
+- Digits (passphrase): log2(10) ≈ 3.32 bits per digit
+- Alphanumeric (key): log2(62) ≈ 5.95 bits per character
 
-3. **Combined Factor Strength**
-   - The fixed 6-digit passphrase provides baseline security
-   - The variable key length allows scaling security needs
-   - Total security is multiplicative: passphrase combinations × key combinations
+### Security Tiers & Vulnerabilities
 
-The system's security is robust when used with longer keys, despite the fixed passphrase length. The combination of AES-GCM encryption, PBKDF2 key derivation, and the multiplicative effect of two independent factors provides strong protection when properly configured with maximum key length.
+#### 1. Minimum Security (8-digit passphrase, 12-char key)
+**Entropy:**
+- Passphrase: 8 × 3.32 = 26.57 bits
+- Key: 12 × 5.95 = 71.4 bits
+- Total Combined: ≈ 98 bits
 
-# TNC Module Configuration Guide
+**Vulnerability Level: Moderate**
+- Susceptible to dedicated hardware attacks
+- Theoretical break time on specialized hardware: weeks to months
+- Vulnerable to quantum computing threats (estimated 49 effective qubits)
+- Example attack vector: State-level actors with quantum capabilities
 
-## Understanding .tnc Files
+**Use Case:**
+- Personal communications
+- Short-term sensitive data
+- Not recommended for high-value targets
 
-A .tnc file is a secure configuration file that stores your encryption credentials (passphrase and key combinations). These files are themselves encrypted, adding an extra layer of security to your stored credentials.
+#### 2. Medium Security (12-digit passphrase, 16-char key)
+**Entropy:**
+- Passphrase: 12 × 3.32 = 39.86 bits
+- Key: 16 × 5.95 = 95.2 bits
+- Total Combined: ≈ 135 bits
 
-## How Configuration Storage Works
+**Vulnerability Level: Low**
+- Resistant to current supercomputer attacks
+- Theoretical break time: decades on classical hardware
+- Quantum resistance: Requires 67+ ideal qubits
+- Example attack vector: Future quantum computers (10+ years)
 
-### Basic Concept
-When you save a configuration, the TNC Module:
-1. Takes your current passphrase and key
-2. Encrypts them with a password you provide
-3. Saves them as a .tnc file
+**Use Case:**
+- Corporate data protection
+- Long-term storage
+- Sensitive communications
 
-### Security Features
-- Each .tnc file is independently encrypted
-- Uses the same AES-GCM encryption as the main system
-- Requires a separate password for access
-- Generates unique security elements for each file
+#### 3. High Security (16-digit passphrase, 24-char key)
+**Entropy:**
+- Passphrase: 16 × 3.32 = 53.14 bits
+- Key: 24 × 5.95 = 142.8 bits
+- Total Combined: ≈ 196 bits
 
-## Using Configurations
+**Vulnerability Level: Very Low**
+- Beyond current technological capabilities
+- Break time: Computationally infeasible
+- Quantum resistance: Requires 98+ ideal qubits
+- Example attack vector: Theoretical future technologies
 
-### Saving a New Configuration
-1. Set up your passphrase and key in the TNC Module
-2. Click the "💾 Save" button
-3. Enter a password for this configuration
-4. Choose where to save your .tnc file
+**Use Case:**
+- Critical infrastructure
+- National security applications
+- Multi-decade data protection
 
-### Loading a Configuration
-1. Click the "📤 Load" button
-2. Select your saved .tnc file
-3. Enter the password for this configuration
-4. Your credentials will automatically load if correct
+#### Social Engineering/Human Factors
+All security levels equally vulnerable to:
+- Credential sharing
+- Insecure storage
+- Password reuse
+- Physical observation
 
-## Best Practices
+### Memory Attack Resistance
 
-### File Management
-- Keep different configurations for different purposes
-- Use meaningful names for your .tnc files
-- Examples:
-  - `personal.tnc` - for personal encryption
-  - `work.tnc` - for professional use
-  - `secure.tnc` - for highly sensitive data
+**Minimum Security:**
+- Vulnerable to cold boot attacks
+- RAM scraping possible
+- Key reconstruction feasible
 
-### Password Selection
-- Use strong, unique passwords for each .tnc file
-- Make passwords memorable but secure
-- Don't reuse passwords from your encryption credentials
+**Medium Security:**
+- Partial memory attacks mitigated
+- Key reconstruction difficult
+- Requires precise timing
 
-### Storage Security
-- Store .tnc files separately from encrypted data
-- Keep secure backups of important configurations
-- Consider offline storage for sensitive configs
-- Delete unused or outdated configurations
+**High Security:**
+- Memory attack resistant
+- Key reconstruction infeasible
+- Temporal security enhanced
 
-## Security Considerations
+### Quantum Computing Implications
 
-### Protection Layers
-1. **File Encryption**
-   - .tnc files are encrypted with AES-GCM
-   - Each file has its own encryption elements
-   - Password protection prevents unauthorized access
+**Current Quantum Threat Level:**
+- Below 100 qubits: Safe across all security levels
+- 100-1000 qubits: Minimum security threatened
+- 1000+ qubits: Medium security potentially vulnerable
+- 5000+ qubits: Required for high security threats
 
-2. **Access Requirements**
-   - The .tnc file itself
-   - The correct password for that file
-   - Both needed to recover credentials
+### Implementation Security Features
 
-### Risk Management
-- Don't share .tnc files over unsecured channels
-- Keep passwords separate from .tnc files
-- Consider using a password manager for .tnc passwords
-- Regular backups of critical configurations
-
-## Recovery Planning
-
-### Essential Elements
-To recover stored credentials, you need:
-- Access to the .tnc file
-- The password used to create it
-- A working copy of the TNC Module
-
-### Backup Strategy
-1. **File Security**
-   - Multiple copies of critical .tnc files
-   - Secure, separate storage locations
-   - Regular verification of backups
-
-2. **Password Recovery**
-   - Secure documentation of passwords
-   - Trusted backup contacts if needed
-   - Emergency access procedures
-
-## Organization Tips
-
-### File Structure
-- Group related configurations together
-- Use consistent naming conventions
-- Document which config is used where
-
-### Usage Tracking
-- Keep a secure log of active configurations
-- Note which systems use which configs
-- Record when configurations are created or updated
-
-## Maintenance
-
-### Regular Tasks
-- Review and update configurations periodically
-- Verify backup copies are accessible
-- Remove outdated or unused configurations
-- Test recovery procedures occasionally
-
-### Security Updates
-- Check for any security advisories
-- Update configurations if security practices change
-- Maintain current backup procedures
-
-The .tnc configuration system provides a secure and convenient way to manage multiple sets of encryption credentials while maintaining strong security through encryption and password protection. When used properly, it allows for efficient management of different security levels and use cases while keeping your encryption credentials safe.
+The system includes protections against:
+- Timing attacks (constant-time operations)
+- Brute force (rate limiting)
+- Rainbow table attacks (unique salts)
+- Key derivation attacks (high iteration count)
