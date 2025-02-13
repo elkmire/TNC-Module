@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TNC Security</title>
+    <style>
+        :root {
+            --primary-bg: #11111b;
+            --secondary-bg: #1e1e2e;
+            --border-color: #313244;
+            --text-color: #cdd6f4;
+            --text-secondary: #bac2de;
+            --accent-blue: #89b4fa;
+            --accent-red: #f38ba8;
+            --accent-orange: #fab387;
+            --accent-green: #a6e3a1;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--primary-bg);
+            color: var(--text-color);
+            min-height: 100vh;
+            padding: 1rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .title-section h1 {
+            font-size: 1.875rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .title-section p {
+            color: var(--text-secondary);
+        }
+
+        .button-container {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: var(--secondary-bg);
+            border: 2px solid;
+        }
+
+        .button-encrypt {
+            color: var(--accent-orange);
+            border-color: var(--accent-orange);
+        }
+
+        .button-decrypt {
+            color: var(--accent-green);
+            border-color: var(--accent-green);
+        }
+
+        .button-reset {
+            color: var(--accent-red);
+            border-color: var(--accent-red);
+        }
+
+        .button:hover {
+            opacity: 0.8;
+        }
+
+        .button-storage {
+            color: var(--accent-blue);
+            border-color: var(--accent-blue);
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: var(--secondary-bg);
+            margin: 15% auto;
+            padding: 1.5rem;
+            border: 2px solid var(--border-color);
+            border-radius: 0.5rem;
+            width: 90%;
+            max-width: 400px;
+            position: relative;
+        }
+
+        .modal-content h2 {
+            margin-bottom: 1rem;
+            color: var(--text-color);
+        }
+
+        .modal-content .button-container {
+            margin-top: 1rem;
+            display: flex;
+            gap: 0.5rem;
+            justify-content: flex-end;
+        }
+
+        .credentials-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .input-group label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .input-field {
+            padding: 0.75rem;
+            background-color: var(--secondary-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 0.5rem;
+            color: var(--text-color);
+            width: 100%;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+
+        .io-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .textarea-field {
+            min-height: 200px;
+            resize: vertical;
+        }
+
+        .error-message {
+            background-color: var(--accent-red);
+            color: var(--primary-bg);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .button-container {
+                flex-direction: column;
+            }
+
+            .button {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="title-section">
+                <h1>TNC Module</h1>
+                <p>developed by elkmire</p>
+            </div>
+            <div class="button-container">
+                <button id="modeButton" class="button button-encrypt">
+                    🔒 ENCRYPT MODE
+                </button>
+                <button id="resetButton" class="button button-reset">
+                    🔄 RESET
+                </button>
+            </div>
+        </div>
+
+        <div class="credentials-section">
+            <div class="input-group">
+                <label for="passphrase">Passphrase (6 digits)</label>
+                <input type="password" id="passphrase" class="input-field" 
+                       maxlength="6" placeholder="******"
+                       inputmode="numeric" pattern="[0-9]*">
+            </div>
+            
+            <div class="input-group">
+                <label for="key">Key (numeric)</label>
+                <input type="password" id="key" class="input-field" 
+                       maxlength="16" placeholder="Enter key"
+                       inputmode="numeric" pattern="[0-9]*">
+            </div>
+            
+            <div class="input-group">
+                <label>Credential Storage</label>
+                <div class="button-container">
+                    <button class="button button-storage" id="loadButton">📤 Load</button>
+                    <button class="button button-storage" id="saveButton">💾 Save</button>
+                </div>
+                
+                <!-- Password Dialog -->
+                <div id="passwordDialog" class="modal">
+                    <div class="modal-content">
+                        <h2 id="dialogTitle">Enter Password</h2>
+                        <input type="password" id="passwordInput" class="input-field" 
+                               placeholder="Enter password">
+                        <div class="button-container">
+                            <button class="button button-storage" id="dialogConfirm">Confirm</button>
+                            <button class="button button-reset" id="dialogCancel">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- File input for loading -->
+                <input type="file" id="fileInput" accept=".tnc" style="display: none;">
+            </div>
+        </div>
+
+        <div class="io-section">
+            <div class="input-group">
+                <label for="inputMessage">Input Message</label>
+                <textarea id="inputMessage" class="input-field textarea-field"
+                          placeholder="Enter text to process..."></textarea>
+            </div>
+            
+            <div class="input-group">
+                <label for="outputMessage">Output</label>
+                <textarea id="outputMessage" class="input-field textarea-field"
+                          placeholder="Ensure 6 digit passphrase and numberical key..." readonly></textarea>
+            </div>
+        </div>
+
+        <div id="errorMessage" class="error-message"></div>
+    </div>
+
+    <script>
+        // Core crypto utilities
+        const cryptoUtil = {
+            async deriveKey(passphrase, salt) {
+                const enc = new TextEncoder();
+                const keyMaterial = await crypto.subtle.importKey(
+                    "raw",
+                    enc.encode(passphrase),
+                    { name: "PBKDF2" },
+                    false,
+                    ["deriveBits"]
+                );
+                
+                return crypto.subtle.deriveBits(
+                    {
+                        name: "PBKDF2",
+                        salt: enc.encode(salt),
+                        iterations: 100000,
+                        hash: "SHA-256",
+                    },
+                    keyMaterial,
+                    256
+                );
+            },
+
+            async encrypt(text, passphrase, key) {
+                try {
+                    if (!text || !passphrase || !key) return '';
+                    const salt = window.crypto.getRandomValues(new Uint8Array(32));
+                    const derivedKey = await this.deriveKey(passphrase, salt);
+                    const enc = new TextEncoder();
+                    const data = enc.encode(text);
+                    
+                    const aesKey = await crypto.subtle.importKey(
+                        "raw",
+                        derivedKey,
+                        { name: "AES-GCM" },
+                        false,
+                        ["encrypt"]
+                    );
+                    
+                    const iv = window.crypto.getRandomValues(new Uint8Array(12));
+                    const encrypted = await crypto.subtle.encrypt(
+                        { name: "AES-GCM", iv },
+                        aesKey,
+                        data
+                    );
+                    
+                    const result = new Uint8Array(iv.length + salt.length + encrypted.byteLength);
+                    result.set(iv);
+                    result.set(salt, iv.length);
+                    result.set(new Uint8Array(encrypted), iv.length + salt.length);
+                    
+                    return btoa(String.fromCharCode(...result));
+                } catch (error) {
+                    throw new Error('Encryption failed: ' + error.message);
+                }
+            },
+
+            async decrypt(encryptedText, passphrase, key) {
+                try {
+                    if (!encryptedText || !passphrase || !key) return '';
+                    const encrypted = Uint8Array.from(atob(encryptedText), c => c.charCodeAt(0));
+                    
+                    const iv = encrypted.slice(0, 12);
+                    const salt = encrypted.slice(12, 44);
+                    const data = encrypted.slice(44);
+                    
+                    const derivedKey = await this.deriveKey(passphrase, salt);
+                    const aesKey = await crypto.subtle.importKey(
+                        "raw",
+                        derivedKey,
+                        { name: "AES-GCM" },
+                        false,
+                        ["decrypt"]
+                    );
+                    
+                    const decrypted = await crypto.subtle.decrypt(
+                        { name: "AES-GCM", iv },
+                        aesKey,
+                        data
+                    );
+                    
+                    return new TextDecoder().decode(decrypted);
+                } catch (error) {
+                    throw new Error('Decryption failed: Invalid credentials or corrupted data');
+                }
+            }
+        };
+
+        // UI Elements
+        const elements = {
+            modeButton: document.getElementById('modeButton'),
+            resetButton: document.getElementById('resetButton'),
+            passphrase: document.getElementById('passphrase'),
+            key: document.getElementById('key'),
+            inputMessage: document.getElementById('inputMessage'),
+            outputMessage: document.getElementById('outputMessage'),
+            errorMessage: document.getElementById('errorMessage'),
+            loadButton: document.getElementById('loadButton'),
+            saveButton: document.getElementById('saveButton')
+        };
+
+        // State
+        let state = {
+            encryptMode: true,
+            timeoutId: null
+        };
+
+        // UI Updates
+        function updateMode() {
+            const { modeButton } = elements;
+            if (state.encryptMode) {
+                modeButton.textContent = '🔒 ENCRYPT MODE';
+                modeButton.className = 'button button-encrypt';
+            } else {
+                modeButton.textContent = '🔓 DECRYPT MODE';
+                modeButton.className = 'button button-decrypt';
+            }
+        }
+
+        function showError(message) {
+            elements.errorMessage.textContent = message;
+            elements.errorMessage.style.display = message ? 'block' : 'none';
+        }
+
+        // Core functionality
+        async function processInput() {
+            const { passphrase, key, inputMessage, outputMessage } = elements;
+            showError('');
+            
+            if (!passphrase.value || !key.value || !inputMessage.value) {
+                outputMessage.value = '';
+                return;
+            }
+
+            if (!/^\d{6}$/.test(passphrase.value)) {
+                showError('Passphrase must be exactly 6 digits');
+                return;
+            }
+
+            if (!/^\d+$/.test(key.value)) {
+                showError('Key must contain only numbers');
+                return;
+            }
+
+            try {
+                const result = await (state.encryptMode ? 
+                    cryptoUtil.encrypt(inputMessage.value, passphrase.value, key.value) : 
+                    cryptoUtil.decrypt(inputMessage.value, passphrase.value, key.value));
+                outputMessage.value = result;
+            } catch (err) {
+                showError(err.message);
+                outputMessage.value = '';
+            }
+        }
+
+        function scheduleUpdate() {
+            if (state.timeoutId) {
+                clearTimeout(state.timeoutId);
+            }
+            state.timeoutId = setTimeout(processInput, 300);
+        }
+
+        function resetApplication() {
+            state.encryptMode = true;
+            updateMode();
+            elements.passphrase.value = '';
+            elements.key.value = '';
+            elements.inputMessage.value = '';
+            elements.outputMessage.value = '';
+            showError('');
+        }
+
+        // Event Listeners
+        elements.modeButton.addEventListener('click', () => {
+            state.encryptMode = !state.encryptMode;
+            updateMode();
+            scheduleUpdate();
+        });
+
+        elements.resetButton.addEventListener('click', resetApplication);
+
+        // input validation for numeric fields
+        function validateNumericInput(event) {
+            // Allow special keys like backspace, delete, arrows
+            if (event.key === 'Backspace' || event.key === 'Delete' || 
+                event.key === 'ArrowLeft' || event.key === 'ArrowRight' ||
+                event.key === 'Tab') {
+                return;
+            }
+            
+            // Prevent non-numeric input
+            if (!/^\d$/.test(event.key)) {
+                event.preventDefault();
+            }
+        }
+
+        elements.passphrase.addEventListener('keydown', validateNumericInput);
+        elements.key.addEventListener('keydown', validateNumericInput);
+        
+        // Prevent paste of non-numeric content
+        function validatePaste(event) {
+            const pastedData = (event.clipboardData || window.clipboardData).getData('text');
+            if (!/^\d+$/.test(pastedData)) {
+                event.preventDefault();
+            }
+        }
+
+        elements.passphrase.addEventListener('paste', validatePaste);
+        elements.key.addEventListener('paste', validatePaste);
+
+        ['passphrase', 'key', 'inputMessage'].forEach(id => {
+            elements[id].addEventListener('input', scheduleUpdate);
+        });
+
+        // File handling functions
+        async function saveCredentials() {
+            const { passphrase, key } = elements;
+            if (!passphrase.value || !key.value) {
+                showError('No credentials to save');
+                return;
+            }
+
+            // Show password dialog
+            const passwordDialog = document.getElementById('passwordDialog');
+            const dialogTitle = document.getElementById('dialogTitle');
+            const passwordInput = document.getElementById('passwordInput');
+            const dialogConfirm = document.getElementById('dialogConfirm');
+            const dialogCancel = document.getElementById('dialogCancel');
+
+            dialogTitle.textContent = 'Enter Password for Credential File';
+            passwordDialog.style.display = 'block';
+            passwordInput.value = '';
+
+            // Handle dialog actions
+            const dialogPromise = new Promise((resolve, reject) => {
+                dialogConfirm.onclick = () => {
+                    const password = passwordInput.value;
+                    if (!password) {
+                        showError('Password cannot be empty');
+                        return;
+                    }
+                    passwordDialog.style.display = 'none';
+                    resolve(password);
+                };
+
+                dialogCancel.onclick = () => {
+                    passwordDialog.style.display = 'none';
+                    reject('Cancelled');
+                };
+            });
+
+            try {
+                const password = await dialogPromise;
+                
+                // Create and encrypt credentials string
+                const credString = `${passphrase.value}:${key.value}`;
+                const encryptedData = await cryptoUtil.encrypt(credString, password, '123456');
+                
+                // Create blob and save with dialog
+                const blob = new Blob([encryptedData], { type: 'text/plain' });
+                try {
+                    const handle = await window.showSaveFilePicker({
+                        suggestedName: 'credentials.tnc',
+                        types: [{
+                            description: 'TNC Credential File',
+                            accept: {'text/plain': ['.tnc']}
+                        }]
+                    });
+                    const writable = await handle.createWritable();
+                    await writable.write(blob);
+                    await writable.close();
+                } catch (error) {
+                    if (error.name !== 'AbortError') {
+                        throw error;
+                    }
+                }
+                
+                showError('');
+            } catch (error) {
+                if (error !== 'Cancelled') {
+                    showError('Error saving credentials: ' + error.message);
+                }
+            }
+        }
+
+        async function loadCredentials() {
+            const fileInput = document.getElementById('fileInput');
+            fileInput.click();
+
+            fileInput.onchange = async function() {
+                const file = fileInput.files[0];
+                if (!file) return;
+
+                try {
+                    // Read file content
+                    const text = await file.text();
+
+                    // Show password dialog
+                    const passwordDialog = document.getElementById('passwordDialog');
+                    const dialogTitle = document.getElementById('dialogTitle');
+                    const passwordInput = document.getElementById('passwordInput');
+                    const dialogConfirm = document.getElementById('dialogConfirm');
+                    const dialogCancel = document.getElementById('dialogCancel');
+
+                    dialogTitle.textContent = 'Enter Password for Credential File';
+                    passwordDialog.style.display = 'block';
+                    passwordInput.value = '';
+
+                    // Handle dialog actions
+                    const password = await new Promise((resolve, reject) => {
+                        dialogConfirm.onclick = () => {
+                            const pwd = passwordInput.value;
+                            if (!pwd) {
+                                showError('Password cannot be empty');
+                                return;
+                            }
+                            passwordDialog.style.display = 'none';
+                            resolve(pwd);
+                        };
+
+                        dialogCancel.onclick = () => {
+                            passwordDialog.style.display = 'none';
+                            reject('Cancelled');
+                        };
+                    });
+
+                    // Decrypt and set credentials
+                    const decryptedData = await cryptoUtil.decrypt(text, password, '123456');
+                    const [loadedPassphrase, loadedKey] = decryptedData.split(':');
+                    
+                    elements.passphrase.value = loadedPassphrase;
+                    elements.key.value = loadedKey;
+                    showError('');
+                    
+                    // Clear file input
+                    fileInput.value = '';
+                    
+                    // Trigger output update with new credentials
+                    scheduleUpdate();
+                } catch (error) {
+                    if (error !== 'Cancelled') {
+                        showError('Error loading credentials: ' + error.message);
+                    }
+                    fileInput.value = '';
+                }
+            };
+        }
+
+        // event listeners for file handling
+        elements.saveButton.addEventListener('click', saveCredentials);
+        elements.loadButton.addEventListener('click', loadCredentials);
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('passwordDialog');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        };
+
+        // Initialize
+        updateMode();
+    </script>
+</body>
+</html>
