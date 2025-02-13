@@ -6,22 +6,25 @@
     <title>TNC Security</title>
     <style>
         :root {
-            --primary-bg: #11111b;
-            --secondary-bg: #1e1e2e;
-            --border-color: #313244;
-            --text-color: #cdd6f4;
-            --text-secondary: #bac2de;
-            --accent-blue: #89b4fa;
-            --accent-red: #f38ba8;
-            --accent-orange: #fab387;
-            --accent-green: #a6e3a1;
+            --primary-bg: #0a0a12;
+            --secondary-bg: #12121f;
+            --border-color: #2a2a4a;
+            --text-color: #e0e0ff;
+            --text-secondary: #8888aa;
+            --accent-blue: #00ffff;
+            --accent-red: #ff2266;
+            --accent-orange: #ff9966;
+            --accent-green: #00ff99;
+            --glow-blue: 0 0 10px rgba(0, 255, 255, 0.3);
+            --glow-red: 0 0 10px rgba(255, 34, 102, 0.3);
+            --glow-green: 0 0 10px rgba(0, 255, 153, 0.3);
         }
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: system-ui, -apple-system, sans-serif;
+            font-family: 'Monaco', 'Consolas', monospace;
         }
 
         body {
@@ -29,6 +32,9 @@
             color: var(--text-color);
             min-height: 100vh;
             padding: 1rem;
+            background-image: 
+                radial-gradient(circle at 50% 50%, rgba(0, 255, 255, 0.03) 0%, transparent 50%),
+                linear-gradient(rgba(18, 18, 31, 0.97), rgba(18, 18, 31, 0.97));
         }
 
         .container {
@@ -42,63 +48,166 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 2rem;
-            flex-wrap: wrap;
-            gap: 1rem;
+            padding: 1rem;
+            background: var(--secondary-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: var(--glow-blue);
         }
 
         .title-section h1 {
-            font-size: 1.875rem;
+            font-size: 2rem;
             font-weight: bold;
             margin-bottom: 0.5rem;
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            letter-spacing: 2px;
         }
 
         .title-section p {
             color: var(--text-secondary);
-        }
-
-        .button-container {
-            display: flex;
-            gap: 0.75rem;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
         }
 
         .button {
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
             font-weight: 500;
             cursor: pointer;
-            transition: all 0.2s;
-            background: var(--secondary-bg);
-            border: 2px solid;
+            transition: all 0.3s;
+            background: transparent;
+            border: 1px solid;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.9rem;
         }
 
         .button-encrypt {
-            color: var(--accent-orange);
-            border-color: var(--accent-orange);
+            color: var(--accent-blue);
+            border-color: var(--accent-blue);
+            box-shadow: var(--glow-blue);
         }
 
         .button-decrypt {
             color: var(--accent-green);
             border-color: var(--accent-green);
+            box-shadow: var(--glow-green);
         }
 
         .button-reset {
             color: var(--accent-red);
             border-color: var(--accent-red);
+            box-shadow: var(--glow-red);
         }
 
         .button:hover {
-            opacity: 0.8;
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateY(-2px);
         }
 
-        .button-storage {
-            color: var(--accent-blue);
+        .credentials-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .storage-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .storage-buttons .button {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .input-group {
+            background: var(--secondary-bg);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .input-group label {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .input-field {
+            padding: 1rem;
+            background-color: var(--primary-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-color);
+            width: 100%;
+            transition: all 0.3s;
+        }
+
+        .input-field:focus {
+            outline: none;
             border-color: var(--accent-blue);
+            box-shadow: var(--glow-blue);
         }
 
-        /* Modal styles */
+        .textarea-field {
+            min-height: 200px;
+            resize: vertical;
+            font-family: 'Consolas', monospace;
+            line-height: 1.6;
+        }
+
+        .error-message {
+            background-color: rgba(255, 34, 102, 0.1);
+            color: var(--accent-red);
+            padding: 1rem;
+            border-radius: 4px;
+            margin-top: 1rem;
+            border: 1px solid var(--accent-red);
+            display: none;
+        }
+
+        .touch-hint {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        .output-container {
+            position: relative;
+        }
+
+        .copy-indicator {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--accent-green);
+            color: var(--primary-bg);
+            padding: 8px 16px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out;
+            z-index: 1000;
+            box-shadow: var(--glow-green);
+        }
+
         .modal {
             display: none;
             position: fixed;
@@ -106,143 +215,57 @@
             top: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
+            background-color: rgba(0, 0, 0, 0.8);
             z-index: 1000;
+            backdrop-filter: blur(4px);
         }
 
         .modal-content {
             background-color: var(--secondary-bg);
             margin: 15% auto;
-            padding: 1.5rem;
-            border: 2px solid var(--border-color);
-            border-radius: 0.5rem;
+            padding: 2rem;
+            border: 1px solid var(--accent-blue);
+            border-radius: 8px;
             width: 90%;
             max-width: 400px;
             position: relative;
+            box-shadow: var(--glow-blue);
         }
 
         .modal-content h2 {
-            margin-bottom: 1rem;
-            color: var(--text-color);
-        }
-
-        .modal-content .button-container {
-            margin-top: 1rem;
-            display: flex;
-            gap: 0.5rem;
-            justify-content: flex-end;
-        }
-
-        .credentials-section {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1rem;
             margin-bottom: 1.5rem;
-        }
-
-        .input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .input-group label {
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-        }
-
-        .input-field {
-            padding: 0.75rem;
-            background-color: var(--secondary-bg);
-            border: 2px solid var(--border-color);
-            border-radius: 0.5rem;
-            color: var(--text-color);
-            width: 100%;
-        }
-
-        .input-field:focus {
-            outline: none;
-            border-color: var(--accent-blue);
-        }
-
-        .io-section {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .textarea-field {
-            min-height: 200px;
-            resize: vertical;
-        }
-
-        .error-message {
-            background-color: var(--accent-red);
-            color: var(--primary-bg);
-            padding: 1rem;
-            border-radius: 0.5rem;
-            margin-top: 1rem;
-            display: none;
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            letter-spacing: 2px;
         }
 
         @media (max-width: 768px) {
             .header {
                 flex-direction: column;
-                align-items: stretch;
+                gap: 1rem;
+                text-align: center;
             }
 
             .button-container {
                 flex-direction: column;
+                width: 100%;
             }
 
             .button {
                 width: 100%;
                 justify-content: center;
             }
-/* Mobile clipboard styles */
-.copy-indicator {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: var(--accent-green);
-    color: var(--primary-bg);
-    padding: 8px 16px;
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    opacity: 0;
-    transition: opacity 0.2s ease-in-out;
-    z-index: 1000;
-}
-
-.copy-indicator.visible {
-    opacity: 1;
-}
-
-.output-container {
-    position: relative;
-}
-
-.touch-hint {
-    position: absolute;
-    bottom: 8px;
-    right: 8px;
-    color: var(--text-secondary);
-    font-size: 0.75rem;
-    pointer-events: none;
-}
         }
     </style>
 </head>
 <body>
+    <!-- Rest of the HTML structure remains the same -->
     <div class="container">
         <div class="header">
             <div class="title-section">
                 <h1>TNC Module</h1>
-                <p>developed by elkmire</p>
+                <p>modified AES-GCM</p>
+                <p>arranged by elkmire</p>
             </div>
             <div class="button-container">
                 <button id="modeButton" class="button button-encrypt">
@@ -251,6 +274,23 @@
                 <button id="resetButton" class="button button-reset">
                     🔄 RESET
                 </button>
+            </div>
+        </div>
+
+        <div class="io-section">
+            <div class="input-group">
+                <label for="inputMessage">Input Message</label>
+                <textarea id="inputMessage" class="input-field textarea-field"
+                          placeholder="Enter text to process..."></textarea>
+            </div>
+            
+            <div class="input-group">
+                <label for="outputMessage">Output</label>
+                <div class="output-container">
+                    <textarea id="outputMessage" class="input-field textarea-field"
+                              placeholder="Ensure 6 digit passphrase and numberical key..." readonly></textarea>
+                    <div class="touch-hint">Touch to copy</div>
+                </div>
             </div>
         </div>
 
@@ -271,66 +311,52 @@
             
             <div class="input-group">
                 <label>Credential Storage</label>
-                <div class="button-container">
-                    <button class="button button-storage" id="loadButton">📤 Load</button>
-                    <button class="button button-storage" id="saveButton">💾 Save</button>
+                <div class="storage-buttons">
+                    <button class="button button-encrypt" id="loadButton">📤 Load</button>
+                    <button class="button button-encrypt" id="saveButton">💾 Save</button>
                 </div>
-                
-                <!-- Password Dialog -->
-                <div id="passwordDialog" class="modal">
-                    <div class="modal-content">
-                        <h2 id="dialogTitle">Enter Password</h2>
-                        <input type="password" id="passwordInput" class="input-field" 
-                               placeholder="Enter password">
-                        <div class="button-container">
-                            <button class="button button-storage" id="dialogConfirm">Confirm</button>
-                            <button class="button button-reset" id="dialogCancel">Cancel</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- File input for loading -->
-                <input type="file" id="fileInput" accept=".tnc" style="display: none;">
             </div>
-        </div>
-
-        <div class="io-section">
-            <div class="input-group">
-                <label for="inputMessage">Input Message</label>
-                <textarea id="inputMessage" class="input-field textarea-field"
-                          placeholder="Enter text to process..."></textarea>
-            </div>
-            
-            <div class="input-group">
-    <label for="outputMessage">Output</label>
-    <div class="output-container">
-        <textarea id="outputMessage" class="input-field textarea-field"
-                  placeholder="Ensure 6 digit passphrase and numberical key..." readonly></textarea>
-        <div class="touch-hint">Touch to copy</div>
-    </div>
-</div>
         </div>
 
         <div id="errorMessage" class="error-message"></div>
     </div>
 
+    <!-- Password Dialog -->
+    <div id="passwordDialog" class="modal">
+        <div class="modal-content">
+            <h2 id="dialogTitle">Enter Password</h2>
+            <input type="password" id="passwordInput" class="input-field" 
+                   placeholder="Enter password">
+            <div class="button-container">
+                <button class="button button-encrypt" id="dialogConfirm">Confirm</button>
+                <button class="button button-reset" id="dialogCancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- File input for loading -->
+    <input type="file" id="fileInput" accept=".tnc" style="display: none;">
+
     <script>
         // Core crypto utilities
         const cryptoUtil = {
-            async deriveKey(passphrase, salt) {
+            async deriveKeyFromFactor(factor, salt, info) {
                 const enc = new TextEncoder();
                 const keyMaterial = await crypto.subtle.importKey(
                     "raw",
-                    enc.encode(passphrase),
+                    enc.encode(factor),
                     { name: "PBKDF2" },
                     false,
                     ["deriveBits"]
                 );
                 
+                // Add context to salt using info parameter
+                const contextSalt = new Uint8Array([...enc.encode(salt), ...enc.encode(info)]);
+                
                 return crypto.subtle.deriveBits(
                     {
                         name: "PBKDF2",
-                        salt: enc.encode(salt),
+                        salt: contextSalt,
                         iterations: 100000,
                         hash: "SHA-256",
                     },
@@ -339,14 +365,40 @@
                 );
             },
 
+            async deriveKey(passphrase, key, salt) {
+                // Derive keys from both factors independently
+                const [passphraseKey, keyKey] = await Promise.all([
+                    this.deriveKeyFromFactor(passphrase, salt, "passphrase"),
+                    this.deriveKeyFromFactor(key, salt, "key")
+                ]);
+
+                // XOR the two derived keys together
+                const finalKey = new Uint8Array(32); // 256 bits
+                for (let i = 0; i < 32; i++) {
+                    finalKey[i] = passphraseKey[i] ^ keyKey[i];
+                }
+                
+                return finalKey;
+            },
+
             async encrypt(text, passphrase, key) {
                 try {
                     if (!text || !passphrase || !key) return '';
+                    
+                    // Validate inputs
+                    if (!/^\d{6}$/.test(passphrase)) {
+                        throw new Error('Passphrase must be exactly 6 digits');
+                    }
+                    if (!/^\d+$/.test(key)) {
+                        throw new Error('Key must contain only numbers');
+                    }
+                    
                     const salt = window.crypto.getRandomValues(new Uint8Array(32));
-                    const derivedKey = await this.deriveKey(passphrase, salt);
+                    const derivedKey = await this.deriveKey(passphrase, key, salt);
                     const enc = new TextEncoder();
                     const data = enc.encode(text);
                     
+                    // Import the combined key for AES-GCM
                     const aesKey = await crypto.subtle.importKey(
                         "raw",
                         derivedKey,
@@ -376,13 +428,22 @@
             async decrypt(encryptedText, passphrase, key) {
                 try {
                     if (!encryptedText || !passphrase || !key) return '';
+                    
+                    // Validate inputs
+                    if (!/^\d{6}$/.test(passphrase)) {
+                        throw new Error('Passphrase must be exactly 6 digits');
+                    }
+                    if (!/^\d+$/.test(key)) {
+                        throw new Error('Key must contain only numbers');
+                    }
+                    
                     const encrypted = Uint8Array.from(atob(encryptedText), c => c.charCodeAt(0));
                     
                     const iv = encrypted.slice(0, 12);
                     const salt = encrypted.slice(12, 44);
                     const data = encrypted.slice(44);
                     
-                    const derivedKey = await this.deriveKey(passphrase, salt);
+                    const derivedKey = await this.deriveKey(passphrase, key, salt);
                     const aesKey = await crypto.subtle.importKey(
                         "raw",
                         derivedKey,
@@ -417,39 +478,39 @@
             saveButton: document.getElementById('saveButton')
         };
 
+        // Mobile clipboard functionality
+        const copyIndicator = document.createElement('div');
+        copyIndicator.className = 'copy-indicator';
+        copyIndicator.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>Copied to clipboard</span>
+        `;
+        document.body.appendChild(copyIndicator);
+
+        // event handler for output
+        elements.outputMessage.addEventListener('touchstart', async (event) => {
+            const text = event.target.value;
+            if (!text) return;
+
+            try {
+                await navigator.clipboard.writeText(text);
+                copyIndicator.classList.add('visible');
+                setTimeout(() => {
+                    copyIndicator.classList.remove('visible');
+                }, 2000);
+            } catch (err) {
+                console.error('Failed to copy:', err);
+                showError('Failed to copy to clipboard');
+            }
+        });
+
         // State
         let state = {
             encryptMode: true,
             timeoutId: null
         };
-
-// Mobile clipboard functionality
-const copyIndicator = document.createElement('div');
-copyIndicator.className = 'copy-indicator';
-copyIndicator.innerHTML = `
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <polyline points="20 6 9 17 4 12"></polyline>
-    </svg>
-    <span>Copied to clipboard</span>
-`;
-document.body.appendChild(copyIndicator);
-
-// Add touch event handler for output
-elements.outputMessage.addEventListener('touchstart', async (event) => {
-    const text = event.target.value;
-    if (!text) return;
-
-    try {
-        await navigator.clipboard.writeText(text);
-        copyIndicator.classList.add('visible');
-        setTimeout(() => {
-            copyIndicator.classList.remove('visible');
-        }, 2000);
-    } catch (err) {
-        console.error('Failed to copy:', err);
-        showError('Failed to copy to clipboard');
-    }
-});
 
         // UI Updates
         function updateMode() {
@@ -525,7 +586,7 @@ elements.outputMessage.addEventListener('touchstart', async (event) => {
 
         elements.resetButton.addEventListener('click', resetApplication);
 
-        // input validation for numeric fields
+        // Add input validation for numeric fields
         function validateNumericInput(event) {
             // Allow special keys like backspace, delete, arrows
             if (event.key === 'Backspace' || event.key === 'Delete' || 
@@ -696,6 +757,7 @@ elements.outputMessage.addEventListener('touchstart', async (event) => {
         elements.saveButton.addEventListener('click', saveCredentials);
         elements.loadButton.addEventListener('click', loadCredentials);
 
+        // Close modal when clicking outside
         window.onclick = function(event) {
             const modal = document.getElementById('passwordDialog');
             if (event.target === modal) {
