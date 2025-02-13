@@ -200,6 +200,40 @@
                 width: 100%;
                 justify-content: center;
             }
+/* Mobile clipboard styles */
+.copy-indicator {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--accent-green);
+    color: var(--primary-bg);
+    padding: 8px 16px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+    z-index: 1000;
+}
+
+.copy-indicator.visible {
+    opacity: 1;
+}
+
+.output-container {
+    position: relative;
+}
+
+.touch-hint {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    pointer-events: none;
+}
         }
     </style>
 </head>
@@ -268,10 +302,13 @@
             </div>
             
             <div class="input-group">
-                <label for="outputMessage">Output</label>
-                <textarea id="outputMessage" class="input-field textarea-field"
-                          placeholder="Ensure 6 digit passphrase and numberical key..." readonly></textarea>
-            </div>
+    <label for="outputMessage">Output</label>
+    <div class="output-container">
+        <textarea id="outputMessage" class="input-field textarea-field"
+                  placeholder="Ensure 6 digit passphrase and numberical key..." readonly></textarea>
+        <div class="touch-hint">Touch to copy</div>
+    </div>
+</div>
         </div>
 
         <div id="errorMessage" class="error-message"></div>
@@ -385,6 +422,34 @@
             encryptMode: true,
             timeoutId: null
         };
+
+// Mobile clipboard functionality
+const copyIndicator = document.createElement('div');
+copyIndicator.className = 'copy-indicator';
+copyIndicator.innerHTML = `
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="20 6 9 17 4 12"></polyline>
+    </svg>
+    <span>Copied to clipboard</span>
+`;
+document.body.appendChild(copyIndicator);
+
+// Add touch event handler for output
+elements.outputMessage.addEventListener('touchstart', async (event) => {
+    const text = event.target.value;
+    if (!text) return;
+
+    try {
+        await navigator.clipboard.writeText(text);
+        copyIndicator.classList.add('visible');
+        setTimeout(() => {
+            copyIndicator.classList.remove('visible');
+        }, 2000);
+    } catch (err) {
+        console.error('Failed to copy:', err);
+        showError('Failed to copy to clipboard');
+    }
+});
 
         // UI Updates
         function updateMode() {
