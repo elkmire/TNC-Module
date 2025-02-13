@@ -51,7 +51,38 @@ To load:
 2. Select your file
 3. Enter password
 
-## Security Tips
+## TNC Module Credential Generator
+
+The GEN button provides secure random credential generation that meets the TNC module's requirements while ensuring high entropy:
+
+## Passphrase Generation
+- Creates a 30-character string (~178 bits of entropy)
+- Uses a mix of:
+  - Uppercase letters (A-Z)
+  - Lowercase letters (a-z)
+  - Numbers (0-9)
+- Guarantees at least one character from each required type
+- Final string is randomly shuffled to prevent patterns
+
+## Key Generation
+- Creates a 64-character string (~384 bits of entropy)
+- Uses a mix of:
+  - Uppercase letters (A-Z)
+  - Lowercase letters (a-z)
+  - Numbers (0-9)
+  - Special characters (!@#$%^&*()_+-=[]{}|;:,.<>?)
+- Guarantees at least one character from each required type
+- Final string is randomly shuffled to prevent patterns
+
+## Security Features
+- Uses the Web Crypto API's `crypto.getRandomValues()` for cryptographically secure random number generation
+- Combined entropy exceeds 512 bits (passphrase + key = ~562 bits)
+- Meets all TNC module validation requirements for both fields
+- Automatically triggers input validation after generation
+
+The generated credentials can be immediately used for encryption/decryption or saved to a credential file.
+
+## Manual Entry Security Tips
 - Quality over quantity: Mix uppercase, lowercase, and numbers in passphrase
 - Use special characters in your key
 - Keep your .tnc files secure
