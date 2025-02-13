@@ -121,7 +121,7 @@ The GEN button provides secure random credential generation that meets the TNC m
 - Guarantees at least one character from each required type
 - Final string is randomly shuffled to prevent patterns
 
-## Security Features
+### Gen Features
 - Uses the Web Crypto API's `crypto.getRandomValues()` for cryptographically secure random number generation
 - Combined entropy exceeds 512 bits (passphrase + key = ~562 bits)
 - Meets all TNC module validation requirements for both fields
