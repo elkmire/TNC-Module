@@ -358,7 +358,7 @@
             <div class="title-section">
                 <h1>TNC Module</h1>
                 <p>130-800bit modified AES-GCM</p>
-                <p>by elkmire</p>
+                <p>arranged by elkmire</p>
             </div>
             <div class="button-container">
                 <button id="modeButton" class="button button-encrypt">
@@ -386,30 +386,30 @@
                 </div>
             </div>
 
-        <div class="credentials-section">
-            <div class="input-group">
-                <label for="passphrase">Passphrase (22+ alphanumeric)</label>
-                <input type="password" id="passphrase" class="input-field" 
-                       maxlength="64" placeholder="Enter 22+ chars (mixed case & numbers)"
-                       pattern="[A-Za-z0-9]*">
-            </div>
-            
-            <div class="input-group">
-                <label for="key">Key (20+ mixed alphanumeric)</label>
-                <input type="password" id="key" class="input-field" 
-                       maxlength="64" placeholder="Enter 20+ letters/numbers"
-                       pattern="[a-zA-Z0-9]*">
-            </div>
-            
-            <div class="input-group">
-                <label>Manage Crypto</label>
-                <div class="storage-buttons">
-                    <button class="button button-encrypt" id="loadButton">📤 Load</button>
-                    <button class="button button-encrypt" id="saveButton">💾 Save</button>
-                    <button class="button button-encrypt" id="genButton">🎲 Gen</button>
+            <div class="credentials-section">
+                <div class="input-group">
+                    <label for="passphrase">Passphrase (22+ alphanumeric)</label>
+                    <input type="password" id="passphrase" class="input-field" 
+                           maxlength="64" placeholder="Enter 22+ chars (mixed case & numbers)"
+                           pattern="[A-Za-z0-9]*">
+                </div>
+                
+                <div class="input-group">
+                    <label for="key">Key (20+ mixed)</label>
+                    <input type="password" id="key" class="input-field" 
+                           maxlength="64" placeholder="Enter 20+ mixed chars (alpha, nums, special)"
+                           pattern="[A-Za-z0-9!@#$%^&*()_+=\[\]{};:',.<>/?-]*">
+                </div>
+                
+                <div class="input-group">
+                    <label>Manage Crypto</label>
+                    <div class="storage-buttons">
+                        <button class="button button-encrypt" id="loadButton">📤 Load</button>
+                        <button class="button button-encrypt" id="saveButton">💾 Save</button>
+                        <button class="button button-encrypt" id="genButton">🎲 Gen</button>
+                    </div>
                 </div>
             </div>
-        </div>
 
         <div id="errorMessage" class="error-message"></div>
     </div>
@@ -431,6 +431,7 @@
     <input type="file" id="fileInput" accept=".tnc" style="display: none;">
 
     <script>
+
     // Core crypto utilities
     const cryptoUtil = {
         async deriveKeyFromFactor(factor, salt, info) {
@@ -448,14 +449,14 @@
                 ["deriveBits"]
             );
             
-            // Remove timestamp from context salt for consistent derivation
+            // Create context salt exactly as Python does
             const contextSalt = new Uint8Array([
                 ...salt,
                 ...enc.encode(info),
                 ...enc.encode(factor.length.toString())
             ]);
             
-            return crypto.subtle.deriveBits(
+            const derived = await crypto.subtle.deriveBits(
                 {
                     name: "PBKDF2",
                     salt: contextSalt,
@@ -465,10 +466,11 @@
                 keyMaterial,
                 512
             );
+            
+            return derived;  // Return full 512 bits
         },
 
         async deriveKey(passphrase, key, salt) {
-            // Enhanced validation using original function name
             if (!validateInput(passphrase, key)) {
                 throw new Error('Invalid credentials format');
             }
@@ -478,10 +480,15 @@
                 this.deriveKeyFromFactor(key, salt, "key")
             ]);
 
+            // Take first 64 bytes of each key
+            const passphraseBytes = new Uint8Array(passphraseKey).slice(0, 64);
+            const keyBytes = new Uint8Array(keyKey).slice(0, 64);
+
+            // Combine exactly as Python does
             const finalKey = new Uint8Array(32);
             for (let i = 0; i < 32; i++) {
-                finalKey[i] = (passphraseKey[i] ^ keyKey[i] + 
-                            passphraseKey[i + 32] ^ keyKey[i + 32]) % 256;
+                finalKey[i] = (passphraseBytes[i] ^ keyBytes[i] + 
+                            passphraseBytes[i + 32] ^ keyBytes[i + 32]) % 256;
             }
             
             return finalKey;
@@ -491,12 +498,14 @@
             try {
                 if (!text || !passphrase || !key) return '';
                 
+                // Generate random salt and nonce
                 const salt = window.crypto.getRandomValues(new Uint8Array(64));
+                const nonce = window.crypto.getRandomValues(new Uint8Array(24));
+                
+                // Derive encryption key
                 const derivedKey = await this.deriveKey(passphrase, key, salt);
                 
-                const enc = new TextEncoder();
-                const data = enc.encode(text);
-                
+                // Import key for AES-GCM
                 const aesKey = await crypto.subtle.importKey(
                     "raw",
                     derivedKey,
@@ -505,28 +514,33 @@
                     ["encrypt"]
                 );
                 
-                const iv = window.crypto.getRandomValues(new Uint8Array(24));
+                // Encrypt data
+                const enc = new TextEncoder();
+                const data = enc.encode(text);
                 const encrypted = await crypto.subtle.encrypt(
-                    { name: "AES-GCM", iv, tagLength: 128 },
+                    { name: "AES-GCM", iv: nonce, tagLength: 128 },
                     aesKey,
                     data
                 );
 
+                // Generate credential hash - take first 64 bytes
                 const credHash = await this.deriveKeyFromFactor(
                     passphrase + key, 
                     salt,
                     "verification"
                 );
+                const credHashBytes = new Uint8Array(credHash).slice(0, 64);
                 
+                // Combine components in same order as Python
                 const result = new Uint8Array(
-                    iv.length + salt.length + 64 + encrypted.byteLength
+                    nonce.length + salt.length + credHashBytes.length + encrypted.byteLength
                 );
-                result.set(iv);
-                result.set(salt, iv.length);
-                result.set(new Uint8Array(credHash).slice(0, 64), iv.length + salt.length);
+                result.set(nonce, 0);                               // 24 bytes
+                result.set(salt, nonce.length);                     // 64 bytes
+                result.set(credHashBytes, nonce.length + salt.length); // 64 bytes
                 result.set(
                     new Uint8Array(encrypted), 
-                    iv.length + salt.length + 64
+                    nonce.length + salt.length + credHashBytes.length
                 );
                 
                 return btoa(String.fromCharCode(...result));
@@ -549,17 +563,11 @@
                     throw new Error('Invalid encrypted data format');
                 }
                 
-                // Validate minimum length: 24 (iv) + 64 (salt) + 64 (credHash)
-                const minimumLength = 24 + 64 + 64;
-                if (encrypted.length < minimumLength) {
-                    throw new Error('Invalid encrypted data length');
-                }
-                
-                // Extract components with updated lengths
-                const iv = encrypted.slice(0, 24);  // 24-byte IV
-                const salt = encrypted.slice(24, 88); // 64-byte salt
+                // Extract components
+                const nonce = encrypted.slice(0, 24);    // 24-byte nonce
+                const salt = encrypted.slice(24, 88);    // 64-byte salt
                 const storedCredHash = encrypted.slice(88, 152); // 64-byte credHash
-                const data = encrypted.slice(152); // Rest is encrypted data
+                const data = encrypted.slice(152);     // Rest is encrypted data
                 
                 // Generate verification hash
                 const credHash = await this.deriveKeyFromFactor(
@@ -567,14 +575,12 @@
                     salt,
                     "verification"
                 );
-
-                // Compare hashes (use full 64 bytes)
-                const credHashArray = new Uint8Array(credHash).slice(0, 64);
+                const credHashBytes = new Uint8Array(credHash).slice(0, 64);
                 
                 // Constant-time comparison
                 let hashMatch = true;
                 for (let i = 0; i < 64; i++) {
-                    if (credHashArray[i] !== storedCredHash[i]) {
+                    if (credHashBytes[i] !== storedCredHash[i]) {
                         hashMatch = false;
                     }
                 }
@@ -583,6 +589,7 @@
                     throw new Error('Incorrect passphrase or key');
                 }
                 
+                // Derive and import key
                 const derivedKey = await this.deriveKey(passphrase, key, salt);
                 const aesKey = await crypto.subtle.importKey(
                     "raw",
@@ -594,7 +601,7 @@
                 
                 try {
                     const decrypted = await crypto.subtle.decrypt(
-                        { name: "AES-GCM", iv, tagLength: 128 },
+                        { name: "AES-GCM", iv: nonce, tagLength: 128 },
                         aesKey,
                         data
                     );
@@ -641,14 +648,14 @@
         const element = event.target;
         
         if (element.id === 'passphrase') {
-            if (!/^[a-zA-Z0-9]+$/.test(pastedData)) {
+            if (!/^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]+$/.test(pastedData)) {
                 event.preventDefault();
-                showError('Passphrase must contain only letters and numbers');
+                showError('Passphrase must contain only letters, numbers, and allowed special characters');
             }
         } else if (element.id === 'key') {
-            if (!/^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+$/.test(pastedData)) {
+            if (!/^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]+$/.test(pastedData)) {
                 event.preventDefault();
-                showError('Key must contain only letters, numbers, and special characters');
+                showError('Key must contain only letters, numbers, and allowed special characters');
             }
         }
     }
@@ -774,18 +781,19 @@
             if (!passphrase || passphrase.length < 22) {
                 throw new Error('Passphrase must be at least 22 characters long');
             }
-            // Updated passphrase validation to require mixed case and numbers
-            if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+$/.test(passphrase)) {
+            
+            if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]+$/.test(passphrase)) {
                 throw new Error('Passphrase must contain at least one uppercase letter, one lowercase letter, and one number');
             }
             
             if (!key || key.length < 20) {
                 throw new Error('Key must be at least 20 characters long');
             }
-            // Keep original strict requirements for key
-            if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])[A-Za-z\d!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+$/.test(key)) {
+            
+            if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?])[A-Za-z\d!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]+$/.test(key)) {
                 throw new Error('Key must contain at least one uppercase letter, one lowercase letter, one number, and one special character');
             }
+            
             return true;
         }
 
@@ -866,9 +874,21 @@
             }
         }
 
-        elements.passphrase.addEventListener('keydown', validateNumericInput);
-        elements.key.addEventListener('keydown', validateNumericInput);
+        function validateKeyInput(event) {
+            if (event.key === 'Backspace' || event.key === 'Delete' || 
+                event.key === 'ArrowLeft' || event.key === 'ArrowRight' ||
+                event.key === 'Tab') {
+                return;
+            }
+            
+            // Allow alphanumeric and special characters for both passphrase and key
+            if (!/^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]$/.test(event.key)) {
+                event.preventDefault();
+            }
+        }
         
+        elements.passphrase.addEventListener('keydown', validateKeyInput);
+        elements.key.addEventListener('keydown', validateKeyInput);
         elements.passphrase.addEventListener('paste', validatePaste);
         elements.key.addEventListener('paste', validatePaste);
 
