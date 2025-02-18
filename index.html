@@ -7,25 +7,7 @@
         <!-- PWA Meta Tags -->
         <meta name="theme-color" content="#0a0a12">
         <link rel="icon" type="image/svg+xml" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%2300ffff"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 6c1.4 0 2.8 1.1 2.8 2.5V11c.6 0 1.2.6 1.2 1.2v3.5c0 .7-.5 1.3-1.2 1.3H9.2c-.7 0-1.2-.6-1.2-1.2v-3.5c0-.7.5-1.2 1.2-1.2V9.5C9.2 8.1 10.6 7 12 7zm0 1.2c-.9 0-1.6.7-1.6 1.6V11h3.2V9.8c0-.9-.7-1.6-1.6-1.6z"/></svg>'>
-        
-        <!-- Inline Web App Manifest -->
-        <script type="application/manifest+json">
-        {
-            "name": "TNC Module",
-            "short_name": "TNC",
-            "description": "256bit modified AES-GCM encryption module",
-            "start_url": "./",
-            "display": "standalone",
-            "background_color": "#0a0a12",
-            "theme_color": "#0a0a12",
-            "icons": [{
-                "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300ffff'><path d='M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 6c1.4 0 2.8 1.1 2.8 2.5V11c.6 0 1.2.6 1.2 1.2v3.5c0 .7-.5 1.3-1.2 1.3H9.2c-.7 0-1.2-.6-1.2-1.2v-3.5c0-.7.5-1.2 1.2-1.2V9.5C9.2 8.1 10.6 7 12 7zm0 1.2c-.9 0-1.6.7-1.6 1.6V11h3.2V9.8c0-.9-.7-1.6-1.6-1.6z'/></svg>",
-                "sizes": "512x512",
-                "type": "image/svg+xml",
-                "purpose": "any maskable"
-            }]
-        }
-        </script>
+        <link rel="manifest" href="data:application/json;base64,ewogICAgIm5hbWUiOiAiVE5DIE1vZHVsZSIsCiAgICAic2hvcnRfbmFtZSI6ICJUTkMiLAogICAgImRlc2NyaXB0aW9uIjogIjI1NmJpdCBtb2RpZmllZCBBRVMtR0NNIHN5bW1ldHJpYyBlbmNyeXB0aW9uIG1vZHVsZSIsCiAgICAic3RhcnRfdXJsIjogIi4vIiwKICAgICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICAgImJhY2tncm91bmRfY29sb3IiOiAiIzBhMGExMiIsCiAgICAidGhlbWVfY29sb3IiOiAiIzBhMGExMiIsCiAgICAic2NvcGUiOiAiLi8iLAogICAgImljb25zIjogW3sKICAgICAgICAic3JjIjogImRhdGE6aW1hZ2Uvc3ZnK3htbCw8c3ZnIHhtbG5zPSdodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2Zycgdmlld0JveD0nMCAwIDI0IDI0JyBmaWxsPSclMjMwMGZmZmYnPjxwYXRoIGQ9J00xMiAxTDMgNXY2YzAgNS41NSAzLjg0IDEwLjc0IDkgMTIgNS4xNi0xLjI2IDktNi40NSA5LTEyVjVsLTktNHptMCA2YzEuNCAwIDIuOCAxLjEgMi44IDIuNVYxMWMuNiAwIDEuMi42IDEuMiAxLjJ2My41YzAgLjctLjUgMS4zLTEuMiAxLjNIOS4yYy0uNyAwLTEuMi0uNi0xLjItMS4ydi0zLjVjMC0uNy41LTEuMiAxLjItMS4yVjkuNUM5LjIgOC4xIDEwLjYgNyAxMiA3em0wIDEuMmMtLjkgMC0xLjYuNy0xLjYgMS42VjExaDMuMlY5LjhjMC0uOS0uNy0xLjYtMS42LTEuNnonLz48L3N2Zz4iLAogICAgICAgICJzaXplcyI6ICI1MTJ4NTEyIiwKICAgICAgICAidHlwZSI6ICJpbWFnZS9zdmcreG1sIiwKICAgICAgICAicHVycG9zZSI6ICJhbnkgbWFza2FibGUiCiAgICB9XQp9">
     <style>
         :root {
             /* Dark theme variables (default) */
@@ -473,41 +455,41 @@
     <script>
         // Service Worker Registration
         if ('serviceWorker' in navigator) {
-            // Inline Service Worker
-            const swContent = `
-                const CACHE_NAME = 'tnc-module-v1';
-                const ASSETS = [
-                    './',
-                    './index.html'
-                ];
+            window.addEventListener('load', async () => {
+                try {
+                    // Create service worker content
+                    const swContent = `
+                        const CACHE_NAME = 'tnc-module-v1';
+                        const ASSETS = [
+                            './',
+                            'index.html'
+                        ];
 
-                self.addEventListener('install', event => {
-                    event.waitUntil(
-                        caches.open(CACHE_NAME)
-                            .then(cache => cache.addAll(ASSETS))
-                    );
-                });
+                        self.addEventListener('install', (event) => {
+                            event.waitUntil(
+                                caches.open(CACHE_NAME)
+                                    .then((cache) => cache.addAll(ASSETS))
+                            );
+                        });
 
-                self.addEventListener('fetch', event => {
-                    event.respondWith(
-                        caches.match(event.request)
-                            .then(response => response || fetch(event.request))
-                    );
-                });
-            `;
+                        self.addEventListener('fetch', (event) => {
+                            event.respondWith(
+                                caches.match(event.request)
+                                    .then((response) => response || fetch(event.request))
+                            );
+                        });
+                    `;
 
-            // Create Blob URL for Service Worker
-            const blob = new Blob([swContent], { type: 'text/javascript' });
-            const swUrl = URL.createObjectURL(blob);
+                    // Create a Blob containing the service worker code
+                    const blob = new Blob([swContent], { type: 'text/javascript' });
+                    const swUrl = URL.createObjectURL(blob);
 
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register(swUrl)
-                    .then(registration => {
-                        console.log('ServiceWorker registration successful');
-                    })
-                    .catch(err => {
-                        console.log('ServiceWorker registration failed: ', err);
-                    });
+                    // Register the service worker
+                    const registration = await navigator.serviceWorker.register(swUrl, { scope: './' });
+                    console.log('ServiceWorker registration successful:', registration);
+                } catch (error) {
+                    console.error('ServiceWorker registration failed:', error);
+                }
             });
         }
 
@@ -516,39 +498,47 @@
         const installButton = document.getElementById('installButton');
 
         window.addEventListener('beforeinstallprompt', (e) => {
+            // Prevent Chrome 76+ from automatically showing the prompt
             e.preventDefault();
+            // Stash the event so it can be triggered later
             deferredPrompt = e;
-            // Update display style
+            
+            // Show the install button and ensure it's properly styled
             installButton.style.display = 'inline-flex';
             installButton.style.justifyContent = 'center';
             installButton.style.alignItems = 'center';
+            installButton.style.cursor = 'pointer';
+            
+            // Log that the button should be visible
+            console.log('Install prompt available - button should be visible');
         });
 
         installButton.addEventListener('click', async () => {
-            if (!deferredPrompt) return;
+            console.log('Install button clicked');
+            if (!deferredPrompt) {
+                console.log('No deferred prompt available');
+                return;
+            }
             
+            // Show the install prompt
             deferredPrompt.prompt();
+            
+            // Wait for the user to respond to the prompt
             const { outcome } = await deferredPrompt.userChoice;
             console.log(`User response to the install prompt: ${outcome}`);
             
+            // Clear the deferredPrompt variable
             deferredPrompt = null;
+            
+            // Hide the install button
             installButton.style.display = 'none';
         });
 
         window.addEventListener('appinstalled', () => {
+            console.log('PWA was installed');
             installButton.style.display = 'none';
             deferredPrompt = null;
             showError('TNC Module installed successfully!');
-        });
-
-        // Add this to check if the app is already installed
-        window.addEventListener('load', async () => {
-            if ('getInstalledRelatedApps' in navigator) {
-                const relatedApps = await navigator.getInstalledRelatedApps();
-                if (relatedApps.length > 0) {
-                    installButton.style.display = 'none';
-                }
-            }
         });
     </script>
 
