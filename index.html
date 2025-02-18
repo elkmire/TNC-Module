@@ -13,7 +13,7 @@
         {
             "name": "TNC Module",
             "short_name": "TNC",
-            "description": "130-800bit modified AES-GCM encryption module",
+            "description": "256bit modified AES-GCM encryption module",
             "start_url": "./",
             "display": "standalone",
             "background_color": "#0a0a12",
@@ -182,6 +182,16 @@
         .button:hover {
             background: var(--hover-bg);
             transform: translateY(-2px);
+        }
+
+        .button.button-encrypt:not([disabled]) {
+            background-color: transparent;
+            color: var(--accent-blue);
+            cursor: pointer;
+        }
+
+        .button.button-encrypt:not([disabled]):hover {
+            background-color: var(--hover-bg);
         }
 
         .credentials-section {
@@ -431,10 +441,13 @@
                         <button class="button button-encrypt" id="genButton">🎲 Gen</button>
                     </div>
                 </div>
-                <div class="input-group mt-4">
-                    <button id="installButton" class="button button-encrypt" style="display: none;">
-                        🔑 Install TNC Module
-                    </button>
+                <div class="input-group">
+                    <label>Install App</label>
+                    <div class="storage-buttons">
+                        <button id="installButton" class="button button-encrypt" style="display: none; width: 100%;">
+                            🔑 Install TNC Module
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -505,7 +518,10 @@
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
+            // Update display style
             installButton.style.display = 'inline-flex';
+            installButton.style.justifyContent = 'center';
+            installButton.style.alignItems = 'center';
         });
 
         installButton.addEventListener('click', async () => {
@@ -523,6 +539,16 @@
             installButton.style.display = 'none';
             deferredPrompt = null;
             showError('TNC Module installed successfully!');
+        });
+
+        // Add this to check if the app is already installed
+        window.addEventListener('load', async () => {
+            if ('getInstalledRelatedApps' in navigator) {
+                const relatedApps = await navigator.getInstalledRelatedApps();
+                if (relatedApps.length > 0) {
+                    installButton.style.display = 'none';
+                }
+            }
         });
     </script>
 
